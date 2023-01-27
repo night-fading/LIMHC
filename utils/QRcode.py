@@ -19,23 +19,26 @@ class QRcode:
         self.reader = BarCodeReader()
 
     def message2img(self, message):
-        file_name = message + '.png'
+        file_name = str(random.randint(1, 10000)) + '.png'
         self.qr.clear()
         self.qr.add_data(message)
         self.qr.make(fit=True)
-        self.qr.make_image(fill_color="black", back_color="white").save('../.cache/' + file_name)
-        ret = T.Resize(size=(96, 96))(read_image(os.path.join('../.cache/' + file_name), ImageReadMode.GRAY))
-        os.remove(os.path.join('../.cache/' + file_name))
+        self.qr.make_image(fill_color="black", back_color="white").save('.cache/' + file_name)
+        ret = T.Resize(size=(96, 96))(read_image(os.path.join('.cache/' + file_name), ImageReadMode.GRAY))
+        os.remove(os.path.join('.cache/' + file_name))
         return ret
 
     def img2message(self, img):
         file_name = str(random.randint(1, 10000)) + '.png'
-        F.to_pil_image(img).save('../.cache/' + file_name)
-        results = self.reader.decode('../.cache/' + file_name)
-        os.remove(os.path.join('../.cache/' + file_name))
+        F.to_pil_image(img).save('.cache/' + file_name)
+        results = self.reader.decode('.cache/' + file_name)
+        os.remove(os.path.join('.cache/' + file_name))
         print(results[0]['parsed'])
 
 
 if __name__ == "__main__":
-    x = QRcode().message2img('111')
+    # x = QRcode().message2img('111')
+    # QRcode().img2message(x)
+    message = ''.join(str(i) for i in random.choices([0, 1], k=96))
+    x = QRcode().message2img(message)
     QRcode().img2message(x)
