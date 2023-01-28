@@ -2,6 +2,8 @@ import glob
 import os.path
 import random
 
+import matplotlib
+import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms as T
 from torch.utils.data import Dataset
@@ -49,11 +51,14 @@ class validateDataset(Dataset):
 
 
 if __name__ == "__main__":
-    img_t, img_cropped_t, location = trainDataset('../data/LIMHC').__getitem__(2)
-    print(img_t.shape)
+    print(matplotlib.get_backend())
+    img_t, img_cropped_t, location = trainDataset('../data/LIMHC', '.cache').__getitem__(0)
     print(img_cropped_t.shape)
     print(location)
+    print(img_t.to(torch.uint8).dtype)
+    plt.imshow(img_t.to(torch.uint8).permute(1, 2, 0))
+    plt.show()
     # img = T.ToPILImage()(img_cropped_t)
     # img.show()
-    # img = T.ToPILImage()(img_t)
+    # img = T.ToPILImage()(img_t.to(torch.uint8))
     # img.show()

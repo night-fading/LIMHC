@@ -107,5 +107,5 @@ if __name__ == "__main__":
     print(img_cropped_t.shape)
     x = net.forward(img_cropped_t)
     x = x.squeeze(0)
-    img = T.ToPILImage()(x)
+    img = T.ToPILImage()(x.to(torch.uint8))
     img.show()
