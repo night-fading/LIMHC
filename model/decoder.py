@@ -3,9 +3,12 @@ from typing import Dict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.transforms as T
+from matplotlib import pyplot as plt
 
 from datasets import trainDataset
+from model.encoder import encoder
+from model.hrnet import HighResolutionNet
+from utils.transforms import replaceImage, distort, correctSubImage, get_max_preds
 
 
 class DoubleConv(nn.Sequential):
@@ -62,13 +65,13 @@ class OutConv(nn.Sequential):
         )
 
 
-class UNet(nn.Module):
+class decoder(nn.Module):
     def __init__(self,
-                 in_channels: int = 4,
-                 out_channels: int = 3,
+                 in_channels: int = 3,
+                 out_channels: int = 1,
                  bilinear: bool = True,
                  base_c: int = 64):
-        super(UNet, self).__init__()
+        super(decoder, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.bilinear = bilinear
@@ -101,11 +104,33 @@ class UNet(nn.Module):
 
 
 if __name__ == "__main__":
-    img_t, img_cropped_t, location = trainDataset('../../data/LIMHC', '../.cache').__getitem__(2)
-    net = UNet()
+    img_t, img_cropped_t, position = trainDataset('../../data/LIMHC', '../.cache').__getitem__(3)
+    net = encoder()
     img_cropped_t = img_cropped_t.unsqueeze(0)
-    print(img_cropped_t.shape)
     x = net.forward(img_cropped_t)
-    x = x.squeeze(0)
-    img = T.ToPILImage()(x.to(torch.uint8))
-    img.show()
+    x = torch.clamp(x, min=0.0, max=1.0)
+    # print((x > 1.0).any())
+    x = replaceImage(img_t, x, position=position)
+    x, pos = distort(x, position)
+    # x = perspectiveTransform(x, position)
+    print(type(x))
+    x_d = x.detach()
+    plt.imshow(x_d.permute(1, 2, 0))
+    plt.show()
+    x = x.unsqueeze(0)
+    hrnet = HighResolutionNet()
+    y = hrnet(x)
+    # print(x.shape)
+    preds, maxvals = get_max_preds(y)
+    print(preds.to(torch.int8).squeeze(0).tolist())
+    x = correctSubImage(x.squeeze(0), preds.to(torch.int8).squeeze(0).tolist())
+    x_d = x.detach()
+    print(x_d.shape)
+    plt.imshow(x_d.permute(1, 2, 0))
+    plt.show()
+    decoder_net = decoder()
+    x = decoder_net(x.unsqueeze(0))
+    x_d = x.detach().squeeze(0)
+    print(x_d.shape)
+    plt.imshow(x_d.permute(1, 2, 0))
+    plt.show()

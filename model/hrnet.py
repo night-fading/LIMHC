@@ -3,8 +3,8 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 
 from datasets import trainDataset
-from model.unet import UNet
-from utils.transforms import replaceImage, distort, get_max_preds
+from model.encoder import encoder
+from utils.transforms import replaceImage, distort, get_max_preds, correctSubImage
 
 BN_MOMENTUM = 0.1
 
@@ -286,7 +286,7 @@ class HighResolutionNet(nn.Module):
 
 if __name__ == "__main__":
     img_t, img_cropped_t, position = trainDataset('../../data/LIMHC', '../.cache').__getitem__(3)
-    net = UNet()
+    net = encoder()
     img_cropped_t = img_cropped_t.unsqueeze(0)
     x = net.forward(img_cropped_t)
     x = torch.clamp(x, min=0.0, max=1.0)
@@ -300,8 +300,12 @@ if __name__ == "__main__":
     plt.show()
     x = x.unsqueeze(0)
     hrnet = HighResolutionNet()
-    x = hrnet(x)
-    print(x.shape)
-    preds, maxvals = get_max_preds(x)
-    print(preds)
-    print(maxvals)
+    y = hrnet(x)
+    # print(x.shape)
+    preds, maxvals = get_max_preds(y)
+    print(preds.to(torch.int8).squeeze(0).tolist())
+    x = correctSubImage(x.squeeze(0), preds.to(torch.int8).squeeze(0).tolist())
+    x_d = x.detach()
+    print(x_d.shape)
+    plt.imshow(x_d.permute(1, 2, 0))
+    plt.show()

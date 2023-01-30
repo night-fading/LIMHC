@@ -6,7 +6,7 @@ import torchvision.transforms.functional as F
 from matplotlib import pyplot as plt
 
 from datasets import trainDataset
-from model.unet import UNet
+from model.encoder import encoder
 
 
 def replaceImage(replaced_image, image, position):
@@ -82,17 +82,29 @@ def get_max_preds(batch_heatmaps):
     return preds, maxvals
 
 
+def correctSubImage(img, pos):
+    pts1 = pos
+    pts2 = [[0, 0], [96, 0], [96, 96], [0, 96]]
+
+    img = F.perspective(img, pts1, pts2)
+    img = img[:, :96, :96]
+    return img
+
+
 if __name__ == "__main__":
     img_t, img_cropped_t, position = trainDataset('../../data/LIMHC', '../.cache').__getitem__(3)
-    net = UNet()
+    net = encoder()
     img_cropped_t = img_cropped_t.unsqueeze(0)
     x = net.forward(img_cropped_t)
     x = torch.clamp(x, min=0.0, max=1.0)
     # print((x > 1.0).any())
     x = replaceImage(img_t, x, position=position)
     x, pos = distort(x, position)
+    x_d = x.detach()
+    plt.imshow(x_d.permute(1, 2, 0))
+    plt.show()
     # x = perspectiveTransform(x, position)
-    print(type(x))
+    x = correctSubImage(x, pos)
     x_d = x.detach()
     plt.imshow(x_d.permute(1, 2, 0))
     plt.show()
