@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 from datasets import trainDataset
 from model.unet import UNet
-from utils.transforms import replaceImage, distort
+from utils.transforms import replaceImage, distort, get_max_preds
 
 BN_MOMENTUM = 0.1
 
@@ -302,3 +302,6 @@ if __name__ == "__main__":
     hrnet = HighResolutionNet()
     x = hrnet(x)
     print(x.shape)
+    preds, maxvals = get_max_preds(x)
+    print(preds)
+    print(maxvals)

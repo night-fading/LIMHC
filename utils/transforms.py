@@ -54,7 +54,32 @@ def cvt_pos(position, cvt_mat_t):
             cvt_mat_t[2][0] * u + cvt_mat_t[2][1] * v + cvt_mat_t[2][2])
     y = (cvt_mat_t[1][0] * u + cvt_mat_t[1][1] * v + cvt_mat_t[1][2]) / (
             cvt_mat_t[2][0] * u + cvt_mat_t[2][1] * v + cvt_mat_t[2][2])
-    return (int(x), int(y))
+    return int(x), int(y)
+
+
+def get_max_preds(batch_heatmaps):
+    """
+    get predictions from score maps
+    heatmaps: numpy.ndarray([batch_size, num_joints, height, width])
+    """
+    assert isinstance(batch_heatmaps, torch.Tensor), 'batch_heatmaps should be torch.Tensor'
+    assert len(batch_heatmaps.shape) == 4, 'batch_images should be 4-ndim'
+
+    batch_size, num_joints, h, w = batch_heatmaps.shape
+    heatmaps_reshaped = batch_heatmaps.reshape(batch_size, num_joints, -1)
+    maxvals, idx = torch.max(heatmaps_reshaped, dim=2)
+    maxvals = maxvals.unsqueeze(dim=-1)
+    idx = idx.float()
+
+    preds = torch.zeros((batch_size, num_joints, 2)).to(batch_heatmaps)
+
+    preds[:, :, 0] = idx % w  # column 对应最大值的x坐标
+    preds[:, :, 1] = torch.floor(idx / w)  # row 对应最大值的y坐标
+
+    pred_mask = torch.gt(maxvals, 0.0).repeat(1, 1, 2).float().to(batch_heatmaps.device)
+
+    preds *= pred_mask
+    return preds, maxvals
 
 
 if __name__ == "__main__":
