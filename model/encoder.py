@@ -3,9 +3,6 @@ from typing import Dict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.transforms as T
-
-from datasets import trainDataset
 
 
 class DoubleConv(nn.Sequential):
@@ -98,14 +95,3 @@ class encoder(nn.Module):
         logits = self.out_conv(x)
 
         return logits
-
-
-if __name__ == "__main__":
-    img_t, img_cropped_t, location = trainDataset('../../data/LIMHC', '../.cache').__getitem__(2)
-    net = encoder()
-    img_cropped_t = img_cropped_t.unsqueeze(0)
-    print(img_cropped_t.shape)
-    x = net.forward(img_cropped_t)
-    x = x.squeeze(0)
-    img = T.ToPILImage()(x.to(torch.uint8))
-    img.show()

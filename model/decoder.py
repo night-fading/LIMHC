@@ -3,12 +3,6 @@ from typing import Dict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from matplotlib import pyplot as plt
-
-from datasets import trainDataset
-from model.encoder import encoder
-from model.hrnet import HighResolutionNet
-from utils.transforms import replaceImage, distort, correctSubImage, get_max_preds
 
 
 class DoubleConv(nn.Sequential):
@@ -101,36 +95,3 @@ class decoder(nn.Module):
         logits = self.out_conv(x)
 
         return logits
-
-
-if __name__ == "__main__":
-    img_t, img_cropped_t, position = trainDataset('../../data/LIMHC', '../.cache').__getitem__(3)
-    net = encoder()
-    img_cropped_t = img_cropped_t.unsqueeze(0)
-    x = net.forward(img_cropped_t)
-    x = torch.clamp(x, min=0.0, max=1.0)
-    # print((x > 1.0).any())
-    x = replaceImage(img_t, x, position=position)
-    x, pos = distort(x, position)
-    # x = perspectiveTransform(x, position)
-    print(type(x))
-    x_d = x.detach()
-    plt.imshow(x_d.permute(1, 2, 0))
-    plt.show()
-    x = x.unsqueeze(0)
-    hrnet = HighResolutionNet()
-    y = hrnet(x)
-    # print(x.shape)
-    preds, maxvals = get_max_preds(y)
-    print(preds.to(torch.int8).squeeze(0).tolist())
-    x = correctSubImage(x.squeeze(0), preds.to(torch.int8).squeeze(0).tolist())
-    x_d = x.detach()
-    print(x_d.shape)
-    plt.imshow(x_d.permute(1, 2, 0))
-    plt.show()
-    decoder_net = decoder()
-    x = decoder_net(x.unsqueeze(0))
-    x_d = x.detach().squeeze(0)
-    print(x_d.shape)
-    plt.imshow(x_d.permute(1, 2, 0))
-    plt.show()

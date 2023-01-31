@@ -3,10 +3,6 @@ import numpy as np
 import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as F
-from matplotlib import pyplot as plt
-
-from datasets import trainDataset
-from model.encoder import encoder
 
 
 def replaceImage(replaced_image, image, position):
@@ -16,16 +12,11 @@ def replaceImage(replaced_image, image, position):
 
 
 def distort(img, position):
-    # print(img)
-    img_d = img.detach()
-    plt.imshow(img_d.permute(1, 2, 0))
-    plt.show()
-
     img = T.ColorJitter(.5, .5, .5, .1)(img)
     img = T.GaussianBlur(3, (0.1, 1))(img)
-    img, pos = perspectiveTransform(img, position)
+    img, position_transformed = perspectiveTransform(img, position)
 
-    return img, pos
+    return img, position_transformed
 
 
 def perspectiveTransform(img, position):
@@ -40,11 +31,6 @@ def perspectiveTransform(img, position):
     position[1] = cvt_pos((position[1][1], position[1][0]), M)
     position[2] = cvt_pos((position[2][1], position[2][0]), M)
     position[3] = cvt_pos((position[3][1], position[3][0]), M)
-
-    # img = (img * 255).to(torch.uint8)
-    # pos = torch.tensor([[position[3][0], position[3][1], position[3][0]+1, position[3][1]+1]], dtype=torch.float)
-    # img = draw_bounding_boxes(img, pos, colors=["blue"], width=5)
-
     return img, position
 
 
@@ -89,22 +75,3 @@ def correctSubImage(img, pos):
     img = F.perspective(img, pts1, pts2)
     img = img[:, :96, :96]
     return img
-
-
-if __name__ == "__main__":
-    img_t, img_cropped_t, position = trainDataset('../../data/LIMHC', '../.cache').__getitem__(3)
-    net = encoder()
-    img_cropped_t = img_cropped_t.unsqueeze(0)
-    x = net.forward(img_cropped_t)
-    x = torch.clamp(x, min=0.0, max=1.0)
-    # print((x > 1.0).any())
-    x = replaceImage(img_t, x, position=position)
-    x, pos = distort(x, position)
-    x_d = x.detach()
-    plt.imshow(x_d.permute(1, 2, 0))
-    plt.show()
-    # x = perspectiveTransform(x, position)
-    x = correctSubImage(x, pos)
-    x_d = x.detach()
-    plt.imshow(x_d.permute(1, 2, 0))
-    plt.show()
