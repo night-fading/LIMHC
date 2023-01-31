@@ -32,7 +32,7 @@ class trainDataset(Dataset):
 
         input_encoder = torch.cat((img_cropped_t, qrcode), 0)
         # print(input_encoder.shape)
-        return img_t, input_encoder, [(i, j), (i, j + 96), (i + 96, j + 96), (i + 96, j)]
+        return img_t, img_cropped_t, input_encoder, [(i, j), (i, j + 96), (i + 96, j + 96), (i + 96, j)]
 
 
 # class validateDataset(Dataset):
