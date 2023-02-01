@@ -30,4 +30,5 @@ class dataset(Dataset):
         qrcode = QRcode(self.cache_path).message2img(message)
 
         input_encoder = torch.cat((img_cropped_t, qrcode), 0)
-        return img_t, img_cropped_t, qrcode, input_encoder, [(i, j), (i, j + 96), (i + 96, j + 96), (i + 96, j)]
+        pos = torch.tensor([(i, j), (i, j + 96), (i + 96, j + 96), (i + 96, j)])
+        return img_t, img_cropped_t, qrcode, input_encoder, pos
