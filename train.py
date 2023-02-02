@@ -140,7 +140,7 @@ def train_model(net, optimizer, loss_fn, metrics_dict,
             break
         net.load_state_dict(torch.load(ckpt_path))
 
-        visualization("figure", "../data", ".cache")
+        visualization(net, "figure", "../data", ".cache")
 
     return pd.DataFrame(history)
 

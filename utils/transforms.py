@@ -1,3 +1,4 @@
+import math
 from typing import Tuple
 
 import cv2 as cv
@@ -79,6 +80,34 @@ def get_max_preds(batch_heatmaps):
     return preds, maxvals
 
 
+def get_final_preds(batch_heatmaps: torch.Tensor,
+                    post_processing: bool = False):
+    coords, maxvals = get_max_preds(batch_heatmaps)
+
+    heatmap_height = batch_heatmaps.shape[2]
+    heatmap_width = batch_heatmaps.shape[3]
+
+    # post-processing
+    if post_processing:
+        for n in range(coords.shape[0]):
+            for p in range(coords.shape[1]):
+                hm = batch_heatmaps[n][p]
+                px = int(math.floor(coords[n][p][0] + 0.5))
+                py = int(math.floor(coords[n][p][1] + 0.5))
+                if 1 < px < heatmap_width - 1 and 1 < py < heatmap_height - 1:
+                    diff = torch.tensor(
+                        [
+                            hm[py][px + 1] - hm[py][px - 1],
+                            hm[py + 1][px] - hm[py - 1][px]
+                        ]
+                    ).to(batch_heatmaps.device)
+                    coords[n][p] += torch.sign(diff) * .25
+
+    preds = coords.clone() * 4
+
+    return preds, maxvals
+
+
 def correctSubImage(img, pos):
     batch_size = img.shape[0]
     for k in range(batch_size):
@@ -120,7 +149,7 @@ class KeypointToHeatMap(object):
             kps_weights = visible
 
         heatmap = np.zeros((num_kps, self.heatmap_hw[0], self.heatmap_hw[1]), dtype=np.float32)
-        heatmap_kps = (kps / 4 + 0.5).numpy().astype(np.int32)  # round
+        heatmap_kps = (kps / 4 + 0.5).cpu().numpy().astype(np.int32)  # round
         for kp_id in range(num_kps):
             v = kps_weights[kp_id]
             if v < 0.5:
