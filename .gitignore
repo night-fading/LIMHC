@@ -2,3 +2,6 @@
 
 .cache/*
 !.cache/.gitkeep
+
+.figure/*
+!.figure/.gitkeep

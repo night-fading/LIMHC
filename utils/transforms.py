@@ -1,4 +1,3 @@
-import random
 from typing import Tuple
 
 import cv2 as cv
@@ -22,7 +21,8 @@ def distort(img, position):
 
     batch_size = img.shape[0]
     for k in range(batch_size):
-        if random.choices([0, 1])[0]:
+        # if random.choices([0, 1])[0]:
+        if 0:
             img[k], position[k] = perspectiveTransform(img[k].clone(), position[k].clone())
         else:
             position[k][0] = torch.tensor([position[k][0][1], position[k][0][0]])
@@ -30,6 +30,7 @@ def distort(img, position):
             position[k][2] = torch.tensor([position[k][2][1], position[k][2][0]])
             position[k][3] = torch.tensor([position[k][3][1], position[k][3][0]])
     return img, position
+
 
 def perspectiveTransform(img, position):
     pts1, pts2 = T.RandomPerspective().get_params(256, 256, 0.5)
@@ -80,10 +81,8 @@ def get_max_preds(batch_heatmaps):
 
 def correctSubImage(img, pos):
     batch_size = img.shape[0]
-    pos = pos
     for k in range(batch_size):
         pts1 = pos[k].tolist()
-        print(pts1)
         pts2 = [[0, 0], [96, 0], [96, 96], [0, 96]]
         img[k] = F.perspective(img[k].clone(), pts1, pts2)
     img = img[:, :, :96, :96]

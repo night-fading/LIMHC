@@ -32,11 +32,15 @@ class StepRunner:
 
     def step(self, batch):
         img_t, img_cropped_t, qrcode, input_encoder, position = batch
-        # img_t, img_cropped_t, qrcode, input_encoder, position = img_t, img_cropped_t, qrcode, input_encoder, position
+        img_t, img_cropped_t, qrcode, input_encoder, position = img_t.to(
+            'cuda' if torch.cuda.is_available() else 'cpu'), img_cropped_t.to(
+            'cuda' if torch.cuda.is_available() else 'cpu'), qrcode.to(
+            'cuda' if torch.cuda.is_available() else 'cpu'), input_encoder.to(
+            'cuda' if torch.cuda.is_available() else 'cpu'), position.to(
+            'cuda' if torch.cuda.is_available() else 'cpu')
         # loss
         img_encoded, img_entire, img_distorted, pos, heatmap_pred, pos_pred, max_vals, img_corrected, qrcode_recovered = self.net(
             input_encoder, img_t, position)
-        visualization(img_corrected[0].detach().squeeze(0).permute(1, 2, 0))
         loss = loss_fn(pos, heatmap_pred, qrcode, qrcode_recovered)
 
         # backward()
@@ -136,14 +140,16 @@ def train_model(net, optimizer, loss_fn, metrics_dict,
             break
         net.load_state_dict(torch.load(ckpt_path))
 
+        visualization("figure", "../data", ".cache")
+
     return pd.DataFrame(history)
 
 
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
-    net = net()
+    net = net().to('cuda' if torch.cuda.is_available() else 'cpu')
     optimizer = optim.Adam(net.parameters(), lr=1e-3)
     loss_fn = loss().step1
-    metrics_dict = {"psnr": PeakSignalNoiseRatio()}
-    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=1, shuffle=True, num_workers=0)
+    metrics_dict = {"psnr": PeakSignalNoiseRatio().to('cuda' if torch.cuda.is_available() else 'cpu')}
+    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=16, shuffle=True, num_workers=8)
     train_model(net, optimizer, loss_fn, metrics_dict, data_loader, monitor="train_loss", epochs=1)

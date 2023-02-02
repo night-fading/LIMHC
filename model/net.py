@@ -1,7 +1,6 @@
+import torch
 from torch import nn
-from torch.utils.data import DataLoader
 
-from datasets import dataset
 from model.decoder import decoder
 from model.encoder import encoder
 from model.hrnet import HighResolutionNet
@@ -17,17 +16,13 @@ class net(nn.Module):
 
     def forward(self, input_t, img_cover, pos):
         img_encoded = self.encoder(input_t)
+        img_encoded = torch.clamp(img_encoded.clone(), min=0.0, max=1.0)
         img_entire = replaceImage(img_cover, img_encoded, pos)
         img_distorted, pos = distort(img_entire, pos)
+        img_distorted = torch.clamp(img_distorted.clone(), min=0.0, max=1.0)
         heatmap_pred = self.hrnet(img_distorted.clone())
         pos_pred, max_vals = get_max_preds(heatmap_pred)
-        img_corrected = correctSubImage(img_distorted, pos_pred * 4)
+        img_corrected = correctSubImage(img_distorted.clone(), pos_pred * 4)
         qrcode_recovered = self.decoder(img_corrected)
+        img_encoded = torch.clamp(qrcode_recovered.clone(), min=0.0, max=1.0)
         return img_encoded, img_entire, img_distorted, pos, heatmap_pred, pos_pred, max_vals, img_corrected, qrcode_recovered
-
-
-if __name__ == "__main__":
-    net = net()
-    img_t, img_cropped_t, qrcode, input_encoder, position = iter(
-        DataLoader(dataset('../../data/LIMHC', '../.cache'), batch_size=2)).__next__()
-    net(input_encoder, img_t, position)
