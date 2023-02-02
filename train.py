@@ -6,13 +6,14 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-from torch import nn
 from torch.utils.data import DataLoader
 from torchmetrics import PeakSignalNoiseRatio
 from tqdm import tqdm
 
 from datasets import dataset
-from model.encoder import encoder
+from loss import loss
+from model.net import net
+from utils.visualization import visualization
 
 
 def printlog(info):
@@ -31,10 +32,12 @@ class StepRunner:
 
     def step(self, batch):
         img_t, img_cropped_t, qrcode, input_encoder, position = batch
-        img_cropped_t, input_encoder = img_cropped_t.to('mps'), input_encoder.to('mps')
+        # img_t, img_cropped_t, qrcode, input_encoder, position = img_t, img_cropped_t, qrcode, input_encoder, position
         # loss
-        preds = self.net(input_encoder)
-        loss = self.loss_fn(preds, img_cropped_t)
+        img_encoded, img_entire, img_distorted, pos, heatmap_pred, pos_pred, max_vals, img_corrected, qrcode_recovered = self.net(
+            input_encoder, img_t, position)
+        visualization(img_corrected[0].detach().squeeze(0).permute(1, 2, 0))
+        loss = loss_fn(pos, heatmap_pred, qrcode, qrcode_recovered)
 
         # backward()
         if self.optimizer is not None and self.stage == "train":
@@ -43,7 +46,7 @@ class StepRunner:
             self.optimizer.zero_grad()
 
         # metrics
-        step_metrics = {self.stage + "_" + name: metric_fn(preds, img_cropped_t).item()
+        step_metrics = {self.stage + "_" + name: metric_fn(img_encoded, img_cropped_t).item()
                         for name, metric_fn in self.metrics_dict.items()}
         return loss.item(), step_metrics
 
@@ -137,9 +140,10 @@ def train_model(net, optimizer, loss_fn, metrics_dict,
 
 
 if __name__ == "__main__":
-    net = encoder().to('mps')
+    # torch.autograd.set_detect_anomaly(True)
+    net = net()
     optimizer = optim.Adam(net.parameters(), lr=1e-3)
-    loss_fn = nn.MSELoss()
-    metrics_dict = {"psnr": PeakSignalNoiseRatio().to('mps')}
-    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=64, shuffle=True, num_workers=0)
-    train_model(net, optimizer, loss_fn, metrics_dict, data_loader, monitor="train_loss")
+    loss_fn = loss().step1
+    metrics_dict = {"psnr": PeakSignalNoiseRatio()}
+    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=1, shuffle=True, num_workers=0)
+    train_model(net, optimizer, loss_fn, metrics_dict, data_loader, monitor="train_loss", epochs=1)
