@@ -1,0 +1,10 @@
+torch
+qrcode
+torchvision
+pyzxing
+opencv-python
+numpy
+matplotlib
+pandas
+torchmetrics
+tqdm
