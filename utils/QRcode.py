@@ -16,7 +16,7 @@ class QRcode:
             version=None,
             error_correction=qrcode.constants.ERROR_CORRECT_H,
             box_size=1,
-            border=1,
+            border=4,
         )
         self.reader = BarCodeReader()
 
@@ -26,7 +26,7 @@ class QRcode:
         self.qr.add_data(message)
         self.qr.make(fit=True)
         self.qr.make_image(fill_color="black", back_color="white").save(os.path.join(self.cache_path, file_name))
-        ret = T.Resize(size=(96, 96))(
+        ret = T.Resize(size=(96, 96), interpolation=F.InterpolationMode.NEAREST)(
             read_image(os.path.join(self.cache_path, file_name), ImageReadMode.GRAY).to(torch.float32) / 255)
         os.remove(os.path.join(self.cache_path, file_name))
         return ret

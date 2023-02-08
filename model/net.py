@@ -22,7 +22,7 @@ class net(nn.Module):
         img_distorted = torch.clamp(img_distorted.clone(), min=0.0, max=1.0)
         heatmap_pred = self.hrnet(img_distorted.clone())
         pos_pred, max_vals = get_final_preds(heatmap_pred)
-        img_corrected = correctSubImage(img_distorted, pos_pred * 4)
+        img_corrected = correctSubImage(img_distorted.clone(), pos_pred)
         qrcode_recovered = self.decoder(img_corrected)
         qrcode_recovered = torch.clamp(qrcode_recovered.clone(), min=0.0, max=1.0)
         return img_encoded, img_entire, img_distorted, pos, heatmap_pred, pos_pred, max_vals, img_corrected, qrcode_recovered

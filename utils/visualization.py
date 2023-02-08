@@ -10,8 +10,8 @@ from utils.transforms import KeypointToHeatMap
 
 
 def visualization(net, figure_path, data_path, cache_path):
-    img_t, img_cropped_t, qrcode, input_encoder, position = iter(
-        DataLoader(dataset(os.path.join(data_path, 'LIMHC'), cache_path), batch_size=1)).__next__()
+    data_iter = iter(DataLoader(dataset(os.path.join(data_path, 'LIMHC'), cache_path), batch_size=1))
+    img_t, img_cropped_t, qrcode, input_encoder, position = data_iter.__next__()
     img_t, img_cropped_t, qrcode, input_encoder, position = img_t.to(
         'cuda' if torch.cuda.is_available() else 'cpu'), img_cropped_t.to(
         'cuda' if torch.cuda.is_available() else 'cpu'), qrcode.to(
@@ -50,9 +50,15 @@ def visualization(net, figure_path, data_path, cache_path):
     plt.imshow(heatmap_pred.cpu().detach().squeeze(0)[3], plt.cm.gray)
     plt.savefig(os.path.join(figure_path, "heatmap_pred3.png"))
 
-    plt.imshow(qrcode_recovered.cpu().detach().squeeze(0).permute(1, 2, 0))
+    plt.imshow(qrcode.cpu().detach().squeeze(0).squeeze(0), plt.cm.gray)
+    plt.savefig(os.path.join(figure_path, "qrcode.png"))
+    plt.imshow(qrcode_recovered.cpu().detach().squeeze(0).permute(1, 2, 0), plt.cm.gray)
     plt.savefig(os.path.join(figure_path, "qrcode_recovered.png"))
+
+    plt.clf()
 
 
 if __name__ == "__main__":
-    visualization(net().to('cuda' if torch.cuda.is_available() else 'cpu'), "../figure", "../../data", "../.cache")
+    net = net().to('cuda' if torch.cuda.is_available() else 'cpu')
+    net.load_state_dict(torch.load('../5', map_location='cpu'))
+    visualization(net, "../figure", "../../data", "../.cache")

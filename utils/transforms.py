@@ -1,4 +1,5 @@
 import math
+import random
 from typing import Tuple
 
 import cv2 as cv
@@ -22,8 +23,7 @@ def distort(img, position):
 
     batch_size = img.shape[0]
     for k in range(batch_size):
-        # if random.choices([0, 1])[0]:
-        if 0:
+        if random.choices([0, 1])[0]:
             img[k], position[k] = perspectiveTransform(img[k].clone(), position[k].clone())
         else:
             position[k][0] = torch.tensor([position[k][0][1], position[k][0][0]])
@@ -104,6 +104,7 @@ def get_final_preds(batch_heatmaps: torch.Tensor,
                     coords[n][p] += torch.sign(diff) * .25
 
     preds = coords.clone() * 4
+    preds = torch.clamp(preds.clone(), min=0.0, max=256.0)
 
     return preds, maxvals
 
