@@ -8,6 +8,8 @@ import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as F
 
+from utils.jpeg import JpegSS
+
 
 def replaceImage(img_cover, sub_img, position):
     batch_size = img_cover.shape[0]
@@ -20,6 +22,7 @@ def replaceImage(img_cover, sub_img, position):
 def distort(img, position):
     img = T.ColorJitter(.5, .5, .5, .1)(img)
     img = T.GaussianBlur(3, (0.1, 1))(img)
+    img = JpegSS(75)(img)
 
     batch_size = img.shape[0]
     for k in range(batch_size):

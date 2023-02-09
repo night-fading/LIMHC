@@ -5,3 +5,5 @@
 
 .figure/*
 !.figure/.gitkeep
+
+/model_weights.pth
