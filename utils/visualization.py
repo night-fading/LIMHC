@@ -10,6 +10,7 @@ from utils.transforms import KeypointToHeatMap
 
 
 def visualization(net, figure_path, data_path, cache_path):
+    net.eval()
     data_iter = iter(DataLoader(dataset(os.path.join(data_path, 'LIMHC'), cache_path), batch_size=1))
     img_t, img_cropped_t, qrcode, input_encoder, position = data_iter.__next__()
     img_t, img_cropped_t, qrcode, input_encoder, position = img_t.to(
@@ -57,8 +58,10 @@ def visualization(net, figure_path, data_path, cache_path):
 
     plt.clf()
 
+    net.train()
+
 
 if __name__ == "__main__":
     net = net().to('cuda' if torch.cuda.is_available() else 'cpu')
-    net.load_state_dict(torch.load('../5', map_location='cpu'))
+    net.load_state_dict(torch.load('../model_weights.pth', map_location='cpu'))
     visualization(net, "../figure", "../../data", "../.cache")

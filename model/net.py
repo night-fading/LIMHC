@@ -17,7 +17,7 @@ class net(nn.Module):
     def forward(self, input_t, img_cover, pos):
         img_encoded = self.encoder(input_t)
         img_encoded = torch.clamp(img_encoded.clone(), min=0.0, max=1.0)
-        img_entire = replaceImage(img_cover, img_encoded, pos)
+        img_entire = replaceImage(img_cover.clone(), img_encoded, pos)
         img_distorted, pos = distort(img_entire, pos)
         img_distorted = torch.clamp(img_distorted.clone(), min=0.0, max=1.0)
         heatmap_pred = self.hrnet(img_distorted.clone())

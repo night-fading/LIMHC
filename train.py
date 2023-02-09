@@ -149,7 +149,7 @@ def train_model(net, optimizer, loss_fn, metrics_dict,
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
     net = net().to('cuda' if torch.cuda.is_available() else 'cpu')
-    net.load_state_dict(torch.load('checkpoint.pt'))
+    net.load_state_dict(torch.load('model_weights.pth'))
     optimizer = optim.Adam(net.parameters(), lr=1e-4)
     loss_fn = loss().step1
     metrics_dict = {"psnr": PeakSignalNoiseRatio().to('cuda' if torch.cuda.is_available() else 'cpu')}
