@@ -1,7 +1,9 @@
 import os.path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 
 from datasets import dataset
@@ -10,6 +12,7 @@ from utils.transforms import KeypointToHeatMap
 
 
 def visualization(net, figure_path, data_path, cache_path):
+    torch.set_printoptions(threshold=np.inf)
     net.eval()
     data_iter = iter(DataLoader(dataset(os.path.join(data_path, 'LIMHC'), cache_path), batch_size=1))
     img_t, img_cropped_t, qrcode, input_encoder, position = data_iter.__next__()
@@ -57,6 +60,14 @@ def visualization(net, figure_path, data_path, cache_path):
     plt.savefig(os.path.join(figure_path, "qrcode_recovered.png"))
 
     plt.clf()
+
+    loss1 = nn.MSELoss()
+    loss2 = nn.MSELoss()
+    loss3 = nn.MSELoss()
+    heatmap_ground_truth = KeypointToHeatMap()(pos)
+    print(loss1(heatmap_ground_truth.to('cuda' if torch.cuda.is_available() else 'cpu'), heatmap_pred))
+    print(loss2(qrcode.to('cuda' if torch.cuda.is_available() else 'cpu'), qrcode_recovered))
+    print(loss3(img_cropped_t.to('cuda' if torch.cuda.is_available() else 'cpu'), img_encoded))
 
     net.train()
 

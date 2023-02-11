@@ -26,7 +26,7 @@ class dataset(Dataset):
         i, j, h, w = T.RandomCrop.get_params(img_t, (96, 96))
         img_cropped_t = crop(img_t, i, j, h, w)
 
-        message = ''.join(str(i) for i in random.choices([0, 1], k=96))
+        message = ''.join(str(i) for i in random.choices([0, 1], k=56))
         qrcode = QRcode(self.cache_path).message2img(message)
 
         input_encoder = torch.cat((img_cropped_t, qrcode), 0)

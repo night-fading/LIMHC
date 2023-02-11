@@ -3,7 +3,7 @@
 .cache/*
 !.cache/.gitkeep
 
-.figure/*
-!.figure/.gitkeep
+/figure/*
+!figure/.gitkeep
 
 /model_weights.pth

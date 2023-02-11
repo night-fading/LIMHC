@@ -24,7 +24,7 @@ class net(nn.Module):
         img_encoded = self.encoder(input_t)
         img_encoded = torch.clamp(img_encoded.clone(), min=0.0, max=1.0)
         img_entire = replaceImage(img_cover.clone(), img_encoded, pos)
-        img_distorted, pos = distort(img_entire, pos)
+        img_distorted, pos = distort(img_entire.clone(), pos)
         img_distorted = torch.clamp(img_distorted.clone(), min=0.0, max=1.0)
         heatmap_pred = self.hrnet(img_distorted.clone())
         pos_pred, max_vals = get_final_preds(heatmap_pred)
@@ -69,5 +69,5 @@ if __name__ == "__main__":
     net.eval()
     net.load_state_dict(torch.load('../model_weights.pth', map_location='cuda' if torch.cuda.is_available() else 'cpu'))
 
-    net.encode("/Users/leizhe/fsdownload/2007_007818.jpg")
-    # net.decode("/Users/leizhe/fsdownload/5.jpeg")
+    # net.encode("/Users/leizhe/fsdownload/2007_007948.jpg")
+    net.decode("/Users/leizhe/fsdownload/8.png")

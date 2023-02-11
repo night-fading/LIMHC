@@ -20,9 +20,11 @@ def replaceImage(img_cover, sub_img, position):
 
 
 def distort(img, position):
-    img = T.ColorJitter(.5, .5, .5, .1)(img)
+    img = T.ColorJitter(.3, .3, .3, .1)(img)
     img = T.GaussianBlur(3, (0.1, 1))(img)
-    img = JpegSS(75)(img)
+
+    if random.choices([0, 1])[0]:
+        img = JpegSS(75)(img)
 
     batch_size = img.shape[0]
     for k in range(batch_size):
@@ -37,7 +39,7 @@ def distort(img, position):
 
 
 def perspectiveTransform(img, position):
-    pts1, pts2 = T.RandomPerspective().get_params(256, 256, 0.5)
+    pts1, pts2 = T.RandomPerspective().get_params(256, 256, 0.3)
     img = F.perspective(img, pts1, pts2)
 
     pts1 = np.float32(pts1)

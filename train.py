@@ -7,7 +7,8 @@ import pandas as pd
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchmetrics import PeakSignalNoiseRatio
+from torchmetrics import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
+from torchmetrics.image import LearnedPerceptualImagePatchSimilarity
 from tqdm import tqdm
 
 from datasets import dataset
@@ -41,7 +42,8 @@ class StepRunner:
         # loss
         img_encoded, img_entire, img_distorted, pos, heatmap_pred, pos_pred, max_vals, img_corrected, qrcode_recovered = self.net(
             input_encoder, img_t, position)
-        loss = loss_fn(pos, heatmap_pred, qrcode, qrcode_recovered, img_encoded, img_cropped_t)
+
+        loss = loss_fn(pos, heatmap_pred, qrcode, qrcode_recovered, img_encoded, img_cropped_t, img_t, img_entire)
 
         # backward()
         if self.optimizer is not None and self.stage == "train":
@@ -149,9 +151,12 @@ def train_model(net, optimizer, loss_fn, metrics_dict,
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
     net = net().to('cuda' if torch.cuda.is_available() else 'cpu')
-    net.load_state_dict(torch.load('model_weights.pth', map_location='cuda' if torch.cuda.is_available() else 'cpu'))
-    optimizer = optim.Adam(net.parameters(), lr=1e-4)
+    net.load_state_dict(torch.load('checkpoint.pt', map_location='cuda' if torch.cuda.is_available() else 'cpu'))
+    optimizer = optim.Adam(net.parameters(), lr=1e-3)
     loss_fn = loss().step1
-    metrics_dict = {"psnr": PeakSignalNoiseRatio().to('cuda' if torch.cuda.is_available() else 'cpu')}
-    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=32, shuffle=True, num_workers=32)
+    metrics_dict = {"ssim": StructuralSimilarityIndexMeasure().to('cuda' if torch.cuda.is_available() else 'cpu'),
+                    "lpips": LearnedPerceptualImagePatchSimilarity('squeeze', normalize=False).to(
+                        'cuda' if torch.cuda.is_available() else 'cpu'),
+                    "psnr": PeakSignalNoiseRatio().to('cuda' if torch.cuda.is_available() else 'cpu')}
+    data_loader = DataLoader(dataset('../data/LIMHC', '.cache'), batch_size=25, shuffle=True, num_workers=32)
     train_model(net, optimizer, loss_fn, metrics_dict, data_loader, monitor="train_loss", epochs=1000)
